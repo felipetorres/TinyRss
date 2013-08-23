@@ -1,5 +1,10 @@
 package com.tinymission.rss;
 
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
 import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.Intent;
@@ -10,9 +15,11 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.*;
-
-import java.text.SimpleDateFormat;
+import android.widget.BaseAdapter;
+import android.widget.ImageView;
+import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 /** Base class for activities that show an RSS feed.
  *
@@ -79,7 +86,7 @@ public abstract class FeedActivity extends ListActivity {
 	 * @param format the date format string to use when displaying dates (default "MM/dd/yy 'at' hh:mm a ")
 	 */
 	public void setDateFormat(String format) {
-		_dateformat = new SimpleDateFormat(format);
+		_dateformat = new SimpleDateFormat(format, new Locale("pt", "BR"));
 	}
 	
 	
@@ -138,7 +145,7 @@ public abstract class FeedActivity extends ListActivity {
 
 	/** Subclasses must override this to provide their feed url.
 	 */
-	public abstract String getFeedUrl();
+	public abstract String[] getFeedUrl();
 
 	@Override
 	protected void onStart() {
@@ -151,11 +158,16 @@ public abstract class FeedActivity extends ListActivity {
 	public class FeedFetcher extends AsyncTask<String, Integer, Integer> {
 
 		Feed _feed;
+		List<Feed> feeds = new ArrayList<Feed>();
 		
 		@Override
 		protected Integer doInBackground(String... params) {
-			Reader reader = new Reader(params[0]);
-			_feed = reader.fetchFeed();
+
+			for (int i = 0; i < params.length; i++) {
+				Reader reader = new Reader(params[i]);
+				feeds.add(reader.fetchFeed());
+			}
+			
 			return null;
 		}
 
@@ -163,8 +175,8 @@ public abstract class FeedActivity extends ListActivity {
 		protected void onPostExecute(Integer result) {
 			super.onPostExecute(result);
 			cancelProgressDialog();
-			if (_feed != null)
-				setListAdapter(new FeedAdapter(_feed));
+			if (feeds.size() > 0)
+				setListAdapter(new FeedAdapter(feeds));
 			else {
 				Log.w("FeedFetcher", "Unable to fetch feed. See previous errors.");
 				Toast.makeText(FeedActivity.this, "There was an error getting the feed. Please try again later.", Toast.LENGTH_LONG).show();
@@ -179,32 +191,53 @@ public abstract class FeedActivity extends ListActivity {
 	 */
 	public class FeedAdapter extends BaseAdapter {
 	
-		private Feed _feed;
+		private List<Feed> feeds;
 
         public FeedAdapter() {
 
         }
 		
-		public FeedAdapter(Feed feed) {
-			_feed = feed;
+		public FeedAdapter(List<Feed> feed) {
+			feeds = feed;
 		}
+		
+		public int getAllItemCount() {
+			int count = 0;
+			for (Feed feed : feeds) {
+				count += feed.getItemCount();
+			}
+			return count;
+		}
+		
+		public Item getItemAtPositionInList(int position) {
+			
+			for (Feed feed : feeds) {
+				if(position >= feed.getItemCount()) {
+					position -= feed.getItemCount();
+				} else {
+					return feed.getItem(position);
+				}
+			}
+			return null;
+		}
+		
 		
 		@Override
 		public int getCount() {
-			if (_feed == null)
+			if (feeds == null)
 				return 0;
-			if (getMaxItems() > -1 && getMaxItems() < _feed.getItemCount())
-				return getMaxItems();
-			return _feed.getItemCount();
+//			if (getMaxItems() > -1 && getMaxItems() < this.getAllItemCount())
+//				return getMaxItems();
+			return this.getAllItemCount();
 		}
 	
 		@Override
 		public Object getItem(int position) {
-			if (_feed == null)
+			if (feeds == null)
 				return null;
-			if (position >= _feed.getItemCount())
+			if (position >= this.getAllItemCount())
 				return null;
-			return _feed.getItem(position);
+			return this.getItemAtPositionInList(position);
 		}
 	
 		@Override
@@ -268,14 +301,14 @@ public abstract class FeedActivity extends ListActivity {
 						MediaContent mc = item.getMediaContent();
 						imageView.setImageBitmap(null);
 						if (mc != null) {
-							_feed.getImageManager().download(mc.getUrl(), imageView);
+					//		_feed.getImageManager().download(mc.getUrl(), imageView);
 						}
 						break;
 					case MediaThumbnail:
 						MediaThumbnail mt = item.getMediaThumbnail();
 						imageView.setImageBitmap(null);
 						if (mt != null) {
-							_feed.getImageManager().download(mt.getUrl(), imageView);
+					//		_feed.getImageManager().download(mt.getUrl(), imageView);
 						}
 						break;
 					default:
