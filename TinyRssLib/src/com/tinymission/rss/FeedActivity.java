@@ -126,8 +126,7 @@ public abstract class FeedActivity extends ListActivity {
 		FeedFetcher fetcher = new FeedFetcher();
 		fetcher.execute(getFeedUrl());
     }
-
-
+    
 	@Override
 	protected void onListItemClick(ListView l, View v, int position, long id) {
 		super.onListItemClick(l, v, position, id);
@@ -146,7 +145,7 @@ public abstract class FeedActivity extends ListActivity {
 	/** Subclasses must override this to provide their feed url.
 	 */
 	public abstract String[] getFeedUrl();
-
+	
 	@Override
 	protected void onStart() {
 		super.onStart();
@@ -207,6 +206,18 @@ public abstract class FeedActivity extends ListActivity {
 				count += feed.getItemCount();
 			}
 			return count;
+		}
+		
+		public Feed getFeedAtPositionInList(int position) {
+			
+			for (Feed feed : feeds) {
+				if(position >= feed.getItemCount()) {
+					position -= feed.getItemCount();
+				} else {
+					return feed;
+				}
+			}
+			return null;
 		}
 		
 		public Item getItemAtPositionInList(int position) {
@@ -301,14 +312,14 @@ public abstract class FeedActivity extends ListActivity {
 						MediaContent mc = item.getMediaContent();
 						imageView.setImageBitmap(null);
 						if (mc != null) {
-					//		_feed.getImageManager().download(mc.getUrl(), imageView);
+							this.getFeedAtPositionInList(position).getImageManager().download(mc.getUrl(), imageView);
 						}
 						break;
 					case MediaThumbnail:
 						MediaThumbnail mt = item.getMediaThumbnail();
 						imageView.setImageBitmap(null);
 						if (mt != null) {
-					//		_feed.getImageManager().download(mt.getUrl(), imageView);
+							this.getFeedAtPositionInList(position).getImageManager().download(mt.getUrl(), imageView);
 						}
 						break;
 					default:
