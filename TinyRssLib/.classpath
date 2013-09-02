@@ -5,5 +5,7 @@
 	<classpathentry kind="lib" path="lib/jsoup-1.6.1.jar"/>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="gen"/>
+	<classpathentry kind="lib" path="/android-support-v7-appcompat/libs/android-support-v4.jar"/>
+	<classpathentry kind="lib" path="/android-support-v7-appcompat/libs/android-support-v7-appcompat.jar"/>
 	<classpathentry kind="output" path="bin/classes"/>
 </classpath>

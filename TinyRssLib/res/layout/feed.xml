@@ -4,7 +4,7 @@
     android:layout_height="fill_parent"
     android:orientation="vertical" >
 
-    <ListView android:id="@android:id/list"
+    <ListView android:id="@+id/feed_list"
        style="@style/FeedList">
         
     </ListView>

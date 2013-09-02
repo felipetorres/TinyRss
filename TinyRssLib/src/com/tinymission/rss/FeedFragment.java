@@ -5,16 +5,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -24,7 +26,7 @@ import android.widget.Toast;
 /** Base class for activities that show an RSS feed.
  *
  */
-public abstract class FeedActivity extends ListActivity {
+public abstract class FeedFragment extends Fragment {
 
 	
 	/** Subclasses can override to provide a different main list layout
@@ -91,13 +93,14 @@ public abstract class FeedActivity extends ListActivity {
 	
 	
 	private ProgressDialog _progressDialog;
+	private ListView lv;
 
 	/** Shows a progress dialog.
 	 * @param title
 	 * @param text
 	 */
 	public void showProgressDialog(String title, String text) {
-		_progressDialog = ProgressDialog.show(this, title, text);
+		_progressDialog = ProgressDialog.show(getActivity(), title, text);
 	}
 	
 	/** Closes the currently open progress dialog, if there is one.
@@ -112,28 +115,37 @@ public abstract class FeedActivity extends ListActivity {
 
     }
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(getListLayoutId());
+	@Override
+	public View onCreateView(LayoutInflater inflater, ViewGroup container,
+			Bundle savedInstanceState) {
+        
+		View view = inflater.inflate(getListLayoutId(), null);
         
         setDateFormat("MM/dd/yy 'at' hh:mm a ");
         
-        ListView lv = getListView();
+        lv = (ListView) view.findViewById(R.id.feed_list);
         lv.setTextFilterEnabled(true);
-
+        
 		showProgressDialog("Loading...", "Downloading latest feed data");
 		FeedFetcher fetcher = new FeedFetcher();
-		fetcher.execute(getFeedUrl());
+		String[] feedUrl = getFeedUrl();
+		fetcher.execute(feedUrl);
+    	
+    	lv.setOnItemClickListener(new OnItemClickListener() {
+
+			@Override
+			public void onItemClick(AdapterView<?> adapter, View v, int position,
+					long id) {
+				// TODO Auto-generated method stub
+				Item item = (Item) adapter.getItemAtPosition(position);
+				onFeedItemClick(item);
+				
+			}
+		});
+    	
+    	return view;
     }
     
-	@Override
-	protected void onListItemClick(ListView l, View v, int position, long id) {
-		super.onListItemClick(l, v, position, id);
-		Item item = (Item)getListAdapter().getItem(position);
-		onFeedItemClick(item);
-	}
-	
 	protected void onFeedItemClick(Item item) {
 		Uri url = Uri.parse(item.getLink());
 		if (url != null) {
@@ -141,16 +153,11 @@ public abstract class FeedActivity extends ListActivity {
 			startActivity(intent);
 		}
 	}
-
+	
 	/** Subclasses must override this to provide their feed url.
 	 */
 	public abstract String[] getFeedUrl();
 	
-	@Override
-	protected void onStart() {
-		super.onStart();
-	}
-    
 	/** Class for fetching the feed content in the background.
 	 * 
 	 */
@@ -175,10 +182,10 @@ public abstract class FeedActivity extends ListActivity {
 			super.onPostExecute(result);
 			cancelProgressDialog();
 			if (feeds.size() > 0)
-				setListAdapter(new FeedAdapter(feeds));
+				lv.setAdapter(new FeedAdapter(feeds));
 			else {
 				Log.w("FeedFetcher", "Unable to fetch feed. See previous errors.");
-				Toast.makeText(FeedActivity.this, "There was an error getting the feed. Please try again later.", Toast.LENGTH_LONG).show();
+				Toast.makeText(FeedFragment.this.getActivity(), "There was an error getting the feed. Please try again later.", Toast.LENGTH_LONG).show();
 			}
 		}
 		
@@ -237,8 +244,8 @@ public abstract class FeedActivity extends ListActivity {
 		public int getCount() {
 			if (feeds == null)
 				return 0;
-//			if (getMaxItems() > -1 && getMaxItems() < this.getAllItemCount())
-//				return getMaxItems();
+			if (getMaxItems() > -1 && getMaxItems() < this.getAllItemCount())
+				return getMaxItems();
 			return this.getAllItemCount();
 		}
 	
@@ -262,7 +269,7 @@ public abstract class FeedActivity extends ListActivity {
 			View view = null;
 			
 			if (convertView == null) {
-				LayoutInflater inflater = getLayoutInflater();
+				LayoutInflater inflater = getActivity().getLayoutInflater();
 				view = inflater.inflate(getItemLayoutId(), parent, false);
 			}
 			else {
