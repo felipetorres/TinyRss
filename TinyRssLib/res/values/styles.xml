@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    
+    <style name="Progress_Background">
+        <item name="android:background">@android:color/black</item>
+    </style>
 	
 	<!-- Feed List -->
     <style name="FeedList" parent="@android:style/Widget.ListView.White">

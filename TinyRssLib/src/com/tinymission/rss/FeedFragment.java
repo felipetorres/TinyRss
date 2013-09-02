@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import android.app.ProgressDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -28,7 +27,6 @@ import android.widget.Toast;
  */
 public abstract class FeedFragment extends Fragment {
 
-	
 	/** Subclasses can override to provide a different main list layout
 	 * This layout must have a ListView with id android:id/list
 	 * @return the list layout id
@@ -92,41 +90,44 @@ public abstract class FeedFragment extends Fragment {
 	}
 	
 	
-	private ProgressDialog _progressDialog;
+	private View _progressDialog;
 	private ListView lv;
+	private View fragmentView;
 
 	/** Shows a progress dialog.
 	 * @param title
 	 * @param text
 	 */
-	public void showProgressDialog(String title, String text) {
-		_progressDialog = ProgressDialog.show(getActivity(), title, text);
+	public void showProgressDialog() {
+		//_progressDialog = ProgressDialog.show(getActivity(), title, text);
+		_progressDialog = fragmentView.findViewById(R.id.progress);
+		_progressDialog.setVisibility(View.VISIBLE);
 	}
 	
 	/** Closes the currently open progress dialog, if there is one.
 	 */
 	public void cancelProgressDialog() {
 		if (_progressDialog != null) {
-			_progressDialog.cancel();
+			_progressDialog.setVisibility(View.GONE);
 		}
 	}
 	
 	public void customizeItemView(Item item, View v) {
 
     }
-
+	
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
-        
-		View view = inflater.inflate(getListLayoutId(), null);
+		
+		fragmentView = inflater.inflate(getListLayoutId(), null);
         
         setDateFormat("MM/dd/yy 'at' hh:mm a ");
         
-        lv = (ListView) view.findViewById(R.id.feed_list);
+        lv = (ListView) fragmentView.findViewById(R.id.feed_list);
         lv.setTextFilterEnabled(true);
         
-		showProgressDialog("Loading...", "Downloading latest feed data");
+		showProgressDialog();
 		FeedFetcher fetcher = new FeedFetcher();
 		String[] feedUrl = getFeedUrl();
 		fetcher.execute(feedUrl);
@@ -143,7 +144,7 @@ public abstract class FeedFragment extends Fragment {
 			}
 		});
     	
-    	return view;
+    	return fragmentView;
     }
     
 	protected void onFeedItemClick(Item item) {

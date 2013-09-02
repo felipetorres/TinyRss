@@ -5,8 +5,8 @@
     android:orientation="vertical" >
 
     <ListView android:id="@+id/feed_list"
-       style="@style/FeedList">
-        
-    </ListView>
+       style="@style/FeedList"/>
+    
+    <include layout="@layout/progress"/>
 
 </LinearLayout>
