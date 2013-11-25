@@ -165,6 +165,7 @@ public abstract class FeedFragment extends Fragment {
 	public class FeedFetcher extends AsyncTask<String, Integer, Integer> {
 
 		Feed _feed;
+		List<Feed> rawFeeds = new ArrayList<Feed>();
 		List<Feed> feeds = new ArrayList<Feed>();
 		
 		@Override
@@ -172,7 +173,8 @@ public abstract class FeedFragment extends Fragment {
 
 			for (int i = 0; i < params.length; i++) {
 				Reader reader = new Reader(params[i]);
-				feeds.add(reader.fetchFeed());
+				rawFeeds.add(reader.fetchFeed());
+				feeds = withNotEmptyUrl(rawFeeds);
 			}
 			
 			return null;
@@ -182,14 +184,28 @@ public abstract class FeedFragment extends Fragment {
 		protected void onPostExecute(Integer result) {
 			super.onPostExecute(result);
 			cancelProgressDialog();
-			if (feeds.size() > 0)
+			if (feeds.size() > 0) {
 				lv.setAdapter(new FeedAdapter(feeds));
-			else {
+			} else {
 				Log.w("FeedFetcher", "Unable to fetch feed. See previous errors.");
 				Toast.makeText(FeedFragment.this.getActivity(), "There was an error getting the feed. Please try again later.", Toast.LENGTH_LONG).show();
 			}
 		}
 		
+		private List<Feed> withNotEmptyUrl(List<Feed> feed) {
+			List<Feed> filteredFeeds = new ArrayList<Feed>();
+			for (Feed f : feed) {
+				List<Item> items = f.getItems();
+				Feed filteredFeed = new Feed();
+				for (Item i : items) {
+					if(!i.getLink().equals("")) {
+						filteredFeed.addItem(i);
+					}
+				}
+				filteredFeeds.add(filteredFeed);
+			}
+			return filteredFeeds;
+		}
 	}
 	
 
@@ -207,7 +223,7 @@ public abstract class FeedFragment extends Fragment {
 		public FeedAdapter(List<Feed> feed) {
 			feeds = feed;
 		}
-		
+
 		public int getAllItemCount() {
 			int count = 0;
 			for (Feed feed : feeds) {
@@ -266,7 +282,7 @@ public abstract class FeedFragment extends Fragment {
 	
 		@Override
 		public View getView(int position, View convertView, ViewGroup parent) {
-	
+			
 			View view = null;
 			
 			if (convertView == null) {
@@ -278,9 +294,10 @@ public abstract class FeedFragment extends Fragment {
 			}
 			
 			Item item = (Item)getItem(position);
-			if (item == null)
+			if (item == null) {
 				return view;
-			
+			}
+				
 			TextView titleView = (TextView)view.findViewById(R.id.feed_item_title);
 			if (titleView != null && showTitleAuthorOrBoth() != 1)
 				titleView.setText(item.getCleanTitle());
