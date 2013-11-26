@@ -5,6 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import uk.co.senab.actionbarpulltorefresh.library.ActionBarPullToRefresh;
+import uk.co.senab.actionbarpulltorefresh.library.PullToRefreshLayout;
+import uk.co.senab.actionbarpulltorefresh.library.listeners.OnRefreshListener;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -25,7 +28,7 @@ import android.widget.Toast;
 /** Base class for activities that show an RSS feed.
  *
  */
-public abstract class FeedFragment extends Fragment {
+public abstract class FeedFragment extends Fragment implements OnRefreshListener{
 
 	/** Subclasses can override to provide a different main list layout
 	 * This layout must have a ListView with id android:id/list
@@ -93,6 +96,7 @@ public abstract class FeedFragment extends Fragment {
 	private View _progressDialog;
 	private ListView lv;
 	private View fragmentView;
+	private PullToRefreshLayout pullToRefresh;
 
 	/** Shows a progress dialog.
 	 * @param title
@@ -120,12 +124,19 @@ public abstract class FeedFragment extends Fragment {
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
 		
-		fragmentView = inflater.inflate(getListLayoutId(), null);
+		fragmentView = inflater.inflate(getListLayoutId(), container, false);
         
         setDateFormat("MM/dd/yy 'at' hh:mm a ");
         
         lv = (ListView) fragmentView.findViewById(R.id.feed_list);
         lv.setTextFilterEnabled(true);
+        
+        pullToRefresh = (PullToRefreshLayout) fragmentView.findViewById(R.id.feed_pull_to_refresh);
+        
+        ActionBarPullToRefresh.from(getActivity())
+        		.theseChildrenArePullable(R.id.feed_list)
+        		.listener(this)
+        		.setup(pullToRefresh);
         
 		showProgressDialog();
 		FeedFetcher fetcher = new FeedFetcher();
@@ -146,7 +157,15 @@ public abstract class FeedFragment extends Fragment {
     	
     	return fragmentView;
     }
-    
+	
+	@Override
+	public void onRefreshStarted(View view) {
+		FeedFetcher fetcher = new FeedFetcher();
+		String[] feedUrl = getFeedUrl();
+		fetcher.execute(feedUrl);
+		pullToRefresh.setRefreshComplete();
+	}
+	
 	protected void onFeedItemClick(Item item) {
 		Uri url = Uri.parse(item.getLink());
 		if (url != null) {
