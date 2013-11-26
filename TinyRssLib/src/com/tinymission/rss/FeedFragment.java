@@ -163,7 +163,6 @@ public abstract class FeedFragment extends Fragment implements OnRefreshListener
 		FeedFetcher fetcher = new FeedFetcher();
 		String[] feedUrl = getFeedUrl();
 		fetcher.execute(feedUrl);
-		pullToRefresh.setRefreshComplete();
 	}
 	
 	protected void onFeedItemClick(Item item) {
@@ -209,6 +208,7 @@ public abstract class FeedFragment extends Fragment implements OnRefreshListener
 				Log.w("FeedFetcher", "Unable to fetch feed. See previous errors.");
 				Toast.makeText(FeedFragment.this.getActivity(), "There was an error getting the feed. Please try again later.", Toast.LENGTH_LONG).show();
 			}
+			pullToRefresh.setRefreshComplete();
 		}
 		
 		private List<Feed> withNotEmptyUrl(List<Feed> feed) {
